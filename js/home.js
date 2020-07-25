@@ -9,8 +9,18 @@ $(document).ready(function() {
   $("#create-dvd-button").click(function(event) {
     $('#navbarDiv').hide();
     $('#DVDdisplaytableDiv').hide();
+    $('#editDVDformDiv').hide();
     $('#createDVDformDiv').show();
+    createAndPostDVD();
+
+
   })
+
+//on "Save Changes" click (in Edit DVD) post changes to web service
+// ideally their would be an alert box
+//$('#edit-dvd-save-changes-button').click(confirmEditButton())
+  //$('#edit-dvd-save-changes-button').click(function(event) {
+  //}
 
 });
 
@@ -60,8 +70,8 @@ function showEditForm(dvdId) {
 //clear errorMessages
 //$('#errorMessages').empty();
 //get the contact details from the server and then fil and show form on success
-$.ajax(
-  {type: 'Get',
+$.ajax({
+  type: 'Get',
   url: 'http://localhost:8080/dvd/'+ dvdId,
   success: function(data, status) {
     $('#edit-dvd-title').val(data.title)
@@ -69,8 +79,6 @@ $.ajax(
     $('#edit-director').val(data.director)
     $('#edit-rating-dropdown').val(data.rating)
     $('#edit-notes').val(data.notes)
-
-
   },
   error: function() {
     $('#errorMessages')
@@ -79,22 +87,90 @@ $.ajax(
       .text('Error calling web service. Please try again later.');
   }
   });
+
+
   $('#DVDdisplaytableDiv').hide();
   $('#editDVDformDiv').show();
 
+  //cancel and save logic goes here
+  //save means take whatever is in there and 'PUT' it to the service
+  saveEdits(dvdId);
+
+}
+
+function createAndPostDVD(){
+  $.ajax({
+    type: 'POST',
+    url: 'http://localhost:8080/dvd',
+    data: JSON.stringify({
+      title: $('#create-dvd-title').val(),
+      realeaseYear: $('#create-release-year').val(),
+      director: $('#create-director').val(),
+      rating: $('#create-rating-dropdown').val(),
+      notes: $('#create-notes').val()
+
+    }),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    'dataType': 'json',
+    success: function(data, status){
+      //clear errorMessages
+      $('#errorMessages').empty();
+      //clear the form and reload the Table
+      /*$('#create-dvd-title') .val('');
+      $('#create-release-year').val('');
+      $('#create-director').val('');
+      $('#create-rating-dropdown').val('');
+      $('#create-notes').val(''); */
+      loadLibrary();
+    },
+    error: function() {
+      $('#errorMessages')
+      .append($('<li>')
+      .attr({class: 'list-group-item list-group-item-danger'})
+      .text('Error calling web service. Please try again later.'));
+    }
+  });
 }
 
 function confirmDeleteDVD() {
 
 }
 
-function deleteDVD(contactID) {
-  $.ajax({
-    type: 'DELETE',
-    url: "http://localhost:8080/dvd/"+dvdId,
-    success: function(status) {
+function saveEdits(dvdId){
+  $('#edit-dvd-save-changes-button').click(function (event) {
+    //ajax call goes there
+    $.ajax({
+      type: 'PUT',
+      url: 'http://localhost:8080/dvd/' + dvdId,
+      data: JSON.stringify({
+      dvdId: dvdId,
+      title: $('#edit-dvd-title') .val(),
+      realeaseYear: $('#edit-release-year').val(),
+      director: $('#edit-director').val(),
+      rating: $('#edit-rating-dropdown').val(),
+      notes: $('#edit-notes').val()
+    }),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    'dataType': 'json',
+    success: function() {
+      //clear errorMessages
+      //$('#errorMessages').empty();
+      //hideEditForm();
       loadLibrary();
+    },
+    error: function() {
+      $('#errorMessages')
+        .append($('<li>')
+        .attr({class: 'list-group-item list-group-item-danger'})
+        .text('Error calling web service. Please try again later.'));
     }
-
   });
+})
+
 }
